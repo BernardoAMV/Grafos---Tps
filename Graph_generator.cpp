@@ -10,6 +10,9 @@ class Graph {
 public:
     Graph(int vertices) : vertices(vertices) {
         adjList.resize(vertices);
+        TT.resize(vertices);
+        TD.resize(vertices);
+        pai.resize(vertices-1);
     }
 
     void addEdge(int u, int v) {
@@ -26,20 +29,25 @@ public:
             std::cout << std::endl;
         }
     }
-    void ChamadaInicial(int primeiroVertice)
+    void ChamadaInicial()
 {
     t = 0;
+    int cont = 0;
+   
     for (int i = 0; i < TD.size(); i++)
     {
         if (TD[i] == 0)
-            buscaProfundidade(i, primeiroVertice);
+            buscaProfundidade(i, &cont);
     }
+
+    cout << "O número de ciclos do grafo é: " << cont << endl;
+
 }
 
 
 
 
-void buscaProfundidade(int v, int primeiroVertice)
+void buscaProfundidade(int v ,int* cont)
 {
     t += 1;
     TD[v] = t;
@@ -48,17 +56,17 @@ void buscaProfundidade(int v, int primeiroVertice)
         if (TD[w] == 0)
         {
             cout << "A aresta {(" << (v + 1) << "," << (w + 1) << ")} é de árvore" << endl;
-            buscaProfundidade(w, primeiroVertice);
+            pai[w] = v;
+            buscaProfundidade(w, cont);
         }
         else
         {
-            if (v == primeiroVertice)
-            {
                 if (TT[w] == 0 and w != pai[v])
                 {
                     cout << "A aresta {(" << (v + 1) << ", " << (w + 1) << ")} é de retorno" << endl;
+                    (*cont)++;
                 }
-            }
+            
         }
     }
     t += 1;
@@ -121,9 +129,12 @@ int main() {
     for (int vertices : verticesList) {
         int edges = vertices * 2; // Por exemplo, duas arestas para cada vértice
         Graph graph = generateGraph(vertices, edges);
-        std::cout << "Grafo com " << vertices << " vértices e " << edges << " arestas gerado." << std::endl;
-         graph.printGraph(); // Descomente para imprimir o grafo
-    }
 
+        graph.ChamadaInicial();
+
+        std::cout << "Grafo com " << vertices << " vértices e " << edges << " arestas gerado." << std::endl;
+        graph.printGraph(); // Descomente para imprimir o grafo
+    }
+    
     return 0;
 }
