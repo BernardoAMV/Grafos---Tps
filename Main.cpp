@@ -24,6 +24,15 @@ public:
         adjList[u].insert(v);
         adjList[v].insert(u); // Para um grafo não direcionado
     }
+    vector<int> getVertices()
+    {
+        vector<int> verticesArray;
+        for (int i = 0; i < vertices; ++i)
+        {
+            verticesArray.push_back(i); // Adiciona cada vértice ao vetor
+        }
+        return verticesArray;
+    }
 
     void printGraph()
     {
@@ -128,9 +137,8 @@ Graph generateGraph(int vertices, int edges)
 
 
 Graph build_example_graph(){
-    Graph g(12); // O grafo tem 12 vértices (numerados de 0 a 11, que são de 1 a 11 na imagem)
-
-    // Adicionando as arestas do grafo com base na imagem:
+    Graph g(12); 
+    
     g.addEdge(1, 2);
     g.addEdge(1, 3);
     g.addEdge(2, 3);
@@ -150,6 +158,10 @@ Graph build_example_graph(){
     return g;
 
 }
+
+
+
+
 
 void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
 {
@@ -188,6 +200,19 @@ void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
     }
 }
 
+void TarjanInicial(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components){
+    for(int i = 0; i < g.TD.size(); i++){
+        if(g.TD[i] == 0){
+        g.t = 0;
+        while(!g.edges.empty()){
+            g.edges.pop();
+        }
+        Tarjan(g,v,-1,Components);
+        }
+    }
+
+
+}
 
 void printComponents(const vector<vector<pair<int, int>>>& Components) {
     for (int i = 0; i < Components.size(); ++i) {
@@ -202,11 +227,14 @@ void printComponents(const vector<vector<pair<int, int>>>& Components) {
 
 
 int main()
+
 {
+
+
     // Defina o número de vértices e arestas
     vector<vector<pair<int, int>>> Components;
     Graph graph = build_example_graph();
-    Tarjan(graph,1,-1,Components);
+    TarjanInicial(graph,1,-1,Components);
 
     printComponents(Components);
     return 0;
