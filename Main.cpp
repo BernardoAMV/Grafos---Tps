@@ -250,7 +250,7 @@ std::vector<int> verticesList = {100, 1000, 10000, 100000}; //100, 1.000, 10.000
 
      auto endFunction = std::chrono::high_resolution_clock::now();
      std::chrono::duration<double, std::milli> duration = endFunction - startFunction;
-     std::cout << "Tempo de execução com 30 grafos de : " << verticesList[j] <<" vértices "<<"e " <<verticesList[j] * 1.5 <<
+     std::cout << "Tempo de execução usando o Algoritmo proposto por Tarjan com 30 grafos de : " << verticesList[j] <<" vértices "<<"e " <<verticesList[j] * 1.5 <<
      " arestas : " << (duration.count() / 30) << " Milissegundos" << std::endl;
     }
 
