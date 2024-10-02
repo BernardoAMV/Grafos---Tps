@@ -4,6 +4,7 @@
 #include <set>
 #include <ctime>
 #include <stack>
+#include <chrono>
 
 using namespace std;
 
@@ -138,7 +139,7 @@ Graph generateGraph(int vertices, int edges)
 
 Graph build_example_graph(){
     Graph g(12); 
-    
+
     g.addEdge(1, 2);
     g.addEdge(1, 3);
     g.addEdge(2, 3);
@@ -230,12 +231,29 @@ int main()
 
 {
 
+std::vector<int> verticesList = {100, 1000, 10000, 100000}; //100, 1.000, 10.000 e 100.000 vértices
 
-    // Defina o número de vértices e arestas
-    vector<vector<pair<int, int>>> Components;
-    Graph graph = build_example_graph();
-    TarjanInicial(graph,1,-1,Components);
 
-    printComponents(Components);
+    for(int j = 0; j < verticesList.size(); j++){
+        int vertices = verticesList[j];
+        vector<vector<pair<int, int>>> Components;
+        auto startFunction = std::chrono::high_resolution_clock::now();
+
+    for(int i = 0; i < 30; i++){
+        int edges = vertices * 1.5; // Por exemplo, duas arestas para cada vértice
+        Graph graph = generateGraph(vertices, edges);
+        TarjanInicial(graph,0,-1,Components);
+        //printComponents(Components); Descomente se quiser ver os componentes e suas arestas
+        Components.clear();
+
+    }
+
+     auto endFunction = std::chrono::high_resolution_clock::now();
+     std::chrono::duration<double, std::milli> duration = endFunction - startFunction;
+     std::cout << "Tempo de execução com 30 grafos de : " << verticesList[j] <<" vértices "<<"e " <<verticesList[j] * 1.5 <<
+     " arestas : " << (duration.count() / 30) << " Milissegundos" << std::endl;
+    }
+
+   
     return 0;
 }
