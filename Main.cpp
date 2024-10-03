@@ -18,6 +18,7 @@ public:
         pai.resize(vertices - 1);
         LOWPT.resize(vertices);
     }
+    Graph() {}
 
     void addEdge(int u, int v)
     {
@@ -46,21 +47,25 @@ public:
             std::cout << std::endl;
         }
     }
-    void ChamadaInicial()
+
+    void ChamadaInicial(int & cont)
     {
         t = 0;
-        int cont = 0;
 
         for (int i = 0; i < TD.size(); i++)
         {
             if (TD[i] == 0)
-                buscaProfundidade(i, &cont);
+                dfs(i, cont);
         }
-
-        cout << "O número de ciclos do grafo é: " << cont << endl;
+        t = 0;
+        TD.clear();
+        adjList.clear();
+        TD.clear();
+        pai.clear();
+        LOWPT.clear();
     }
 
-    void buscaProfundidade(int v, int *cont)
+    void dfs(int v, int &cont)
     {
         t += 1;
         TD[v] = t;
@@ -68,21 +73,47 @@ public:
         {
             if (TD[w] == 0)
             {
-                cout << "A aresta {(" << (v + 1) << "," << (w + 1) << ")} é de árvore" << endl;
+                // cout << "A aresta {(" << (v + 1) << "," << (w + 1) << ")} é de árvore" << endl;
                 pai[w] = v;
-                buscaProfundidade(w, cont);
+                cont++;
+                dfs(w, cont);
             }
             else
             {
                 if (TT[w] == 0 and w != pai[v])
                 {
-                    cout << "A aresta {(" << (v + 1) << ", " << (w + 1) << ")} é de retorno" << endl;
-                    (*cont)++;
+                    // cout << "A aresta {(" << (v + 1) << ", " << (w + 1) << ")} é de retorno" << endl;
                 }
             }
         }
         t += 1;
         TT[v] = t;
+    }
+
+    bool isArticulation(int vertice)
+    {
+        set<int> originalAdjList = adjList[vertice];
+        for (int neighbor : originalAdjList)
+        {
+            adjList[neighbor].erase(vertice);
+        }
+        adjList[vertice].clear();
+
+        int Count = 0;
+
+        ChamadaInicial(Count);
+
+        
+
+        
+        adjList[vertice] = originalAdjList;
+        for (int neighbor : originalAdjList)
+        {
+            adjList[neighbor].insert(vertice);
+        }
+
+        
+        return Count < vertices - 1; // Um vértice a menos por causa da remoção
     }
 
 public:
@@ -135,9 +166,9 @@ Graph generateGraph(int vertices, int edges)
     return graph;
 }
 
-
-Graph build_example_graph(){
-    Graph g(12); 
+Graph build_example_graph()
+{
+    Graph g(12);
 
     g.addEdge(1, 2);
     g.addEdge(1, 3);
@@ -156,13 +187,9 @@ Graph build_example_graph(){
     g.addEdge(9, 6);
 
     return g;
-
 }
 
-
-
-
-void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
+void Tarjan(Graph &g, int v, int u, vector<vector<pair<int, int>>> &Components)
 
 {
     g.t += 1;
@@ -181,13 +208,14 @@ void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
                 pair<int, int> edge;
                 int u1, u2;
 
-                do {
-                    edge = g.edges.top();  
-                    g.edges.pop();         
-                    Component.push_back(edge);  
+                do
+                {
+                    edge = g.edges.top();
+                    g.edges.pop();
+                    Component.push_back(edge);
                     u1 = edge.first;
                     u2 = edge.second;
-                } while (!g.edges.empty() && g.TD[u1] >= g.TD[w]); 
+                } while (!g.edges.empty() && g.TD[u1] >= g.TD[w]);
 
                 Components.push_back(Component);
             }
@@ -200,57 +228,68 @@ void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
     }
 }
 
-void TarjanInicial(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components){
-    for(int i = 0; i < g.TD.size(); i++){
-        if(g.TD[i] == 0){
-        g.t = 0;
-        while(!g.edges.empty()){
-            g.edges.pop();
-        }
-        Tarjan(g,v,-1,Components);
+void TarjanInicial(Graph &g, int v, int u, vector<vector<pair<int, int>>> &Components)
+{
+    for (int i = 0; i < g.TD.size(); i++)
+    {
+        if (g.TD[i] == 0)
+        {
+            g.t = 0;
+            while (!g.edges.empty())
+            {
+                g.edges.pop();
+            }
+            Tarjan(g, v, -1, Components);
         }
     }
 }
 
-void printComponents(const vector<vector<pair<int, int>>>& Components) {
-    for (int i = 0; i < Components.size(); ++i) {
+void printComponents(const vector<vector<pair<int, int>>> &Components)
+{
+    for (int i = 0; i < Components.size(); ++i)
+    {
         cout << "Componente " << i + 1 << ": " << endl;
-        for (const auto& edge : Components[i]) {
+        for (const auto &edge : Components[i])
+        {
             cout << "(" << edge.first << ", " << edge.second << ")" << endl;
         }
         cout << endl;
     }
 }
 
+void getComponentByCut(Graph g, vector<vector<pair<int, int>>> &Components, vector<int> &vertices)
+{
 
+
+
+
+}
 
 int main()
 
 {
 
-std::vector<int> verticesList = {100, 1000, 10000, 100000}; //100, 1.000, 10.000 e 100.000 vértices
+    std::vector<int> verticesList = {100, 1000, 10000, 100000}; // 100, 1.000, 10.000 e 100.000 vértices
 
-
-    for(int j = 0; j < verticesList.size(); j++){
+    for (int j = 0; j < verticesList.size(); j++)
+    {
         int vertices = verticesList[j];
         vector<vector<pair<int, int>>> Components;
         auto startFunction = std::chrono::high_resolution_clock::now();
 
-    for(int i = 0; i < 30; i++){
-        int edges = vertices * 1.5; // Por exemplo, duas arestas para cada vértice
-        Graph graph = generateGraph(vertices, edges);
-        TarjanInicial(graph,0,-1,Components);
-        //printComponents(Components); Descomente se quiser ver os componentes e suas arestas
-        Components.clear();
+        for (int i = 0; i < 30; i++)
+        {
+            int edges = vertices * 1.5; // Por exemplo, duas arestas para cada vértice
+            Graph graph = generateGraph(vertices, edges);
+            TarjanInicial(graph, 0, -1, Components);
+            // printComponents(Components); Descomente se quiser ver os componentes e suas arestas
+            Components.clear();
+        }
 
+        auto endFunction = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = endFunction - startFunction;
+        std::cout << "Tempo de execução usando o Algoritmo proposto por Tarjan com 30 grafos de : " << verticesList[j] << " vértices " << "e " << verticesList[j] * 1.5 << " arestas : " << (duration.count() / 30) << " Milissegundos" << std::endl;
     }
 
-     auto endFunction = std::chrono::high_resolution_clock::now();
-     std::chrono::duration<double, std::milli> duration = endFunction - startFunction;
-     std::cout << "Tempo de execução usando o Algoritmo proposto por Tarjan com 30 grafos de : " << verticesList[j] <<" vértices "<<"e " <<verticesList[j] * 1.5 <<
-     " arestas : " << (duration.count() / 30) << " Milissegundos" << std::endl;
-    }
-
-   
     return 0;
 }
