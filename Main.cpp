@@ -14,7 +14,6 @@ public:
     Graph(int vertices) : vertices(vertices)
     {
         adjList.resize(vertices);
-        TT.resize(vertices);
         TD.resize(vertices);
         pai.resize(vertices - 1);
         LOWPT.resize(vertices);
@@ -163,8 +162,8 @@ Graph build_example_graph(){
 
 
 
-
 void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
+
 {
     g.t += 1;
     g.TD[v] = g.t;
@@ -211,8 +210,6 @@ void TarjanInicial(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Compo
         Tarjan(g,v,-1,Components);
         }
     }
-
-
 }
 
 void printComponents(const vector<vector<pair<int, int>>>& Components) {
