@@ -95,7 +95,7 @@ public:
     vector<int> LOWPT;
     stack<pair<int, int>> edges;
 
-    vector<int> GetSucessores(int vertice)
+    vector<int> GetSucessores(int vertice) const
     {
         std::vector<int> sucessores;
         for (int neighbor : adjList[vertice])
@@ -135,10 +135,10 @@ Graph generateGraph(int vertices, int edges)
     return graph;
 }
 
+Graph build_example_graph()
+{
+    Graph g(12);
 
-Graph build_example_graph(){
-    Graph g(12); 
-    
     g.addEdge(1, 2);
     g.addEdge(1, 3);
     g.addEdge(2, 3);
@@ -156,14 +156,19 @@ Graph build_example_graph(){
     g.addEdge(9, 6);
 
     return g;
-
 }
 
+Graph build_example_graph2()
+{
 
+    Graph g(3);
+    g.addEdge(1, 2);
+    g.addEdge(1, 3);
 
+    return g;
+}
 
-
-void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
+void Tarjan(Graph &g, int v, int u, vector<vector<pair<int, int>>> &Components)
 {
     g.t += 1;
     g.TD[v] = g.t;
@@ -181,13 +186,14 @@ void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
                 pair<int, int> edge;
                 int u1, u2;
 
-                do {
-                    edge = g.edges.top();  
-                    g.edges.pop();         
-                    Component.push_back(edge);  
+                do
+                {
+                    edge = g.edges.top();
+                    g.edges.pop();
+                    Component.push_back(edge);
                     u1 = edge.first;
                     u2 = edge.second;
-                } while (!g.edges.empty() && g.TD[u1] >= g.TD[w]); 
+                } while (!g.edges.empty() && g.TD[u1] >= g.TD[w]);
 
                 Components.push_back(Component);
             }
@@ -200,42 +206,116 @@ void Tarjan(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components)
     }
 }
 
-void TarjanInicial(Graph& g, int v, int u, vector<vector<pair<int, int>>> &Components){
-    for(int i = 0; i < g.TD.size(); i++){
-        if(g.TD[i] == 0){
-        g.t = 0;
-        while(!g.edges.empty()){
-            g.edges.pop();
-        }
-        Tarjan(g,v,-1,Components);
+void TarjanInicial(Graph &g, int v, int u, vector<vector<pair<int, int>>> &Components)
+{
+    for (int i = 0; i < g.TD.size(); i++)
+    {
+        if (g.TD[i] == 0)
+        {
+            g.t = 0;
+            while (!g.edges.empty())
+            {
+                g.edges.pop();
+            }
+            Tarjan(g, v, -1, Components);
         }
     }
-
-
 }
 
-void printComponents(const vector<vector<pair<int, int>>>& Components) {
-    for (int i = 0; i < Components.size(); ++i) {
+void printComponents(const vector<vector<pair<int, int>>> &Components)
+{
+    for (int i = 0; i < Components.size(); ++i)
+    {
         cout << "Componente " << i + 1 << ": " << endl;
-        for (const auto& edge : Components[i]) {
+        for (const auto &edge : Components[i])
+        {
             cout << "(" << edge.first << ", " << edge.second << ")" << endl;
         }
         cout << endl;
     }
 }
 
+void printAllEdges(const Graph &g)
+{
+    for (int i = 0; i < g.vertices; ++i)
+    {
+        for (int neighbor : g.adjList[i])
+        {
+            cout << "(" << i << ", " << neighbor << ")" << endl;
+        }
+    }
+}
 
+void depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, bool &found)
+{
+    // Marca o nó atual como visitado
+    visited[current] = 1;
+
+    // Verifica se o nó alvo é alcançado
+    if (current == target)
+    {
+        // Se o nó alvo for alcançado, começamos a buscar novamente para o nó original
+        for (int neighbor : g.GetSucessores(current))
+        {
+            if (neighbor == original)
+            {
+                found = true; // Se o original for alcançado, indica que um ciclo foi encontrado
+                return;
+            }
+        }
+        // Continua a busca a partir do nó alvo
+        for (int neighbor : g.GetSucessores(current))
+        {
+            if (!visited[neighbor])
+            {
+                depthFirstSearch(g, neighbor, target, visited, original, found);
+            }
+        }
+        return;
+    }
+
+    // Continua a busca a partir do nó atual
+    for (int neighbor : g.GetSucessores(current))
+    {
+        if (!visited[neighbor])
+        {
+            depthFirstSearch(g, neighbor, target, visited, original, found);
+        }
+    }
+}
+
+void findCycle(Graph &g, int S, int T)
+{
+    vector<int> visited(g.vertices, 0); // Inicializa o array visited com 0
+    bool found = false;                 // Variável para verificar se o ciclo foi encontrado
+
+    // Inicia a busca em profundidade
+    depthFirstSearch(g, S, T, visited, S, found);
+
+    // Verifica se um ciclo foi encontrado
+    if (found)
+    {
+        cout << "Ciclo encontrado entre os vértices " << S << " e " << T << ": Yes" << endl; // Se um ciclo foi encontrado
+    }
+    else
+    {
+        cout << "Ciclo entre os vértices " << S << " e " << T << ": No" << endl; // Se não foi encontrado
+    }
+}
 
 int main()
 
 {
 
-
     // Defina o número de vértices e arestas
-    vector<vector<pair<int, int>>> Components;
+    // vector<vector<pair<int, int>>> Components;
     Graph graph = build_example_graph();
-    TarjanInicial(graph,1,-1,Components);
+    // TarjanInicial(graph,1,-1,Components);
 
-    printComponents(Components);
+    // printComponents(Components);
+
+    printAllEdges(graph);
+
+    findCycle(graph, 1, 11);
     return 0;
 }
