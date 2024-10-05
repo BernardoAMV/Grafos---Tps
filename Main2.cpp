@@ -4,7 +4,10 @@
 #include <set>
 #include <ctime>
 #include <stack>
+#include <queue>
 #include <unordered_set>
+#include <unordered_map>
+#include <algorithm>
 
 using namespace std;
 
@@ -39,12 +42,12 @@ public:
     {
         for (int i = 0; i < vertices; ++i)
         {
-            cout << "Vértice " << i << ": ";
+            std::cout << "Vértice " << i << ": ";
             for (int neighbor : adjList[i])
             {
-                cout << neighbor << " ";
+                std::cout << neighbor << " ";
             }
-            cout << endl;
+            std::cout << std::endl;
         }
     }
     void ChamadaInicial()
@@ -88,7 +91,7 @@ public:
 
 public:
     int vertices;
-    vector<set<int>> adjList; // Usando set para evitar arestas duplicadas
+    std::vector<std::set<int>> adjList; // Usando set para evitar arestas duplicadas
     int t = 0;
     vector<int> TD;
     vector<int> TT;
@@ -98,7 +101,7 @@ public:
 
     vector<int> GetSucessores(int vertice) const
     {
-        vector<int> sucessores;
+        std::vector<int> sucessores;
         for (int neighbor : adjList[vertice])
         {
             sucessores.push_back(neighbor);
@@ -108,12 +111,12 @@ public:
 
     void printSuccessors(int vertice) const
     {
-        cout << "Sucessores de " << vertice << ": ";
+        std::cout << "Sucessores de " << vertice << ": ";
         for (int neighbor : adjList[vertice])
         {
-            cout << neighbor << " ";
+            std::cout << neighbor << " ";
         }
-        cout << endl;
+        std::cout << std::endl;
     }
 };
 
@@ -122,11 +125,11 @@ Graph generateGraph(int vertices, int edges)
     Graph graph(vertices);
 
     // Inicializando o random_device e mt19937
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(0, vertices - 1);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, vertices - 1);
 
-    set<pair<int, int>> edgeSet;
+    std::set<std::pair<int, int>> edgeSet;
 
     while (edgeSet.size() < edges)
     {
@@ -134,7 +137,7 @@ Graph generateGraph(int vertices, int edges)
         int v = dis(gen);
         if (u != v)
         { // Evita loops
-            edgeSet.insert({min(u, v), max(u, v)});
+            edgeSet.insert({std::min(u, v), std::max(u, v)});
         }
     }
 
@@ -246,7 +249,7 @@ void printComponents(const vector<vector<pair<int, int>>> &Components)
     }
 }
 
-void printAllEdgesTwice(const Graph &g)
+void printAllEdges(const Graph &g)
 {
     for (int i = 0; i < g.vertices; ++i)
     {
@@ -257,25 +260,7 @@ void printAllEdgesTwice(const Graph &g)
     }
 }
 
-void printAllEdges(const Graph &g)
-{
-    vector<vector<bool>> printed(g.vertices, vector<bool>(g.vertices, false)); // Matriz de controle para arestas já impressas
-
-    for (int i = 0; i < g.vertices; ++i)
-    {
-        for (int neighbor : g.adjList[i])
-        {
-            if (!printed[i][neighbor] && !printed[neighbor][i]) // Verifica se a aresta (i, neighbor) já foi impressa
-            {
-                cout << "(" << i << ", " << neighbor << ")" << endl;
-                printed[i][neighbor] = printed[neighbor][i] = true; // Marca as arestas como impressas
-            }
-        }
-    }
-}
-
-
-void depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, bool &found, int parent)
+void depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, bool &found)
 {
     // Marca o nó atual como visitado
     visited[current] = 1;
@@ -283,30 +268,33 @@ void depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, i
     // Verifica se o nó alvo é alcançado
     if (current == target)
     {
-        // Continua a busca a partir do nó alvo
+        // Se o nó alvo for alcançado, começamos a buscar novamente para o nó original
         for (int neighbor : g.GetSucessores(current))
         {
-            // Evita revisitar o nó pai (necessário para evitar ciclos falsos)
-            if (!visited[neighbor] && neighbor != parent)
-            {
-                depthFirstSearch(g, neighbor, target, visited, original, found, current);
-            }
-            else if (neighbor == original && neighbor != parent)
+            if (neighbor == original)
             {
                 found = true; // Se o original for alcançado, indica que um ciclo foi encontrado
                 return;
             }
         }
+        // Continua a busca a partir do nó alvo
+        for (int neighbor : g.GetSucessores(current))
+        {
+            if (!visited[neighbor])
+            {
+                depthFirstSearch(g, neighbor, target, visited, original, found);
+            }
+        }
         return;
     }
 
+    g.printSuccessors(current);
     // Continua a busca a partir do nó atual
     for (int neighbor : g.GetSucessores(current))
     {
-        // Evita revisitar o nó pai (necessário para evitar ciclos falsos)
-        if (!visited[neighbor] && neighbor != parent)
+        if (!visited[neighbor])
         {
-            depthFirstSearch(g, neighbor, target, visited, original, found, current);
+            depthFirstSearch(g, neighbor, target, visited, original, found);
         }
     }
 }
@@ -317,7 +305,7 @@ void findCycle(Graph &g, int S, int T)
     bool found = false;                 // Variável para verificar se o ciclo foi encontrado
 
     // Inicia a busca em profundidade
-    depthFirstSearch(g, S, T, visited, S, found, -1);
+    depthFirstSearch(g, S, T, visited, S, found);
 
     // Verifica se um ciclo foi encontrado
     if (found)
@@ -330,19 +318,159 @@ void findCycle(Graph &g, int S, int T)
     }
 }
 
-int main()
-
+Graph createDuplicatedGraph(Graph &g, int S, int T)
 {
+    int originalVertices = g.vertices;
+    Graph newGraph(2 * originalVertices); // Novo grafo com nós duplicados
 
-    // Defina o número de vértices e arestas
-    // vector<vector<pair<int, int>>> Components;
-    Graph graph = build_example_graph();
-    // TarjanInicial(graph,1,-1,Components);
+    for (int i = 0; i < originalVertices; ++i)
+    {
+        for (int neighbor : g.GetSucessores(i))
+        {
+            if (i != S && i != T)
+            {                                                     // Ignora S e T
+                newGraph.addEdge(i, originalVertices + neighbor); // Sender -> Receiver
+            }
+        }
+        if (i != S && i != T)
+        {
+            newGraph.addEdge(originalVertices + i, i); // Receiver -> Sender
+        }
+    }
 
-    // printComponents(Components);
+    // Conecta S e T no novo grafo
+    for (int i = 0; i < originalVertices; ++i)
+    {
+        if (i == S)
+        {
+            newGraph.addEdge(S, originalVertices + S); // S -> sender_S
+        }
+        if (i == T)
+        {
+            newGraph.addEdge(originalVertices + T, T); // receiver_T -> T
+        }
+    }
 
-    printAllEdges(graph);
+    return newGraph;
+}
 
-    findCycle(graph, 7, 9);
+bool bfs(Graph &g, int start, int target, vector<int> &pred)
+{
+    vector<bool> visited(g.vertices, false);
+    queue<int> q;
+
+    q.push(start);
+    visited[start] = true;
+
+    while (!q.empty())
+    {
+        int current = q.front();
+        q.pop();
+
+        if (current == target)
+        {
+            return true; // Caminho encontrado
+        }
+
+        for (int neighbor : g.GetSucessores(current))
+        {
+            if (!visited[neighbor])
+            {
+                visited[neighbor] = true;
+                pred[neighbor] = current; // Armazena o predecessor
+                q.push(neighbor);
+            }
+        }
+    }
+    return false; // Caminho não encontrado
+}
+
+void memorizeFlow(int target, vector<int> &pred, std::unordered_map<int, int> &flow)
+{
+    for (int cur = target; cur != -1; cur = pred[cur])
+    {
+        int prev = pred[cur];
+        if (prev != -1)
+        {
+            flow[cur] = prev; // Memoriza o fluxo
+        }
+    }
+}
+
+void findTwoPaths(Graph &g, int S, int T)
+{
+    Graph newGraph = createDuplicatedGraph(g, S, T);
+    vector<int> pred(newGraph.vertices, -1);
+    std::unordered_map<int, int> flow;
+
+    // Primeira BFS
+    if (bfs(newGraph, S, T, pred))
+    {
+        memorizeFlow(T, pred, flow);
+    }
+    else
+    {
+        cout << "Caminho não encontrado de S a T" << endl;
+        return;
+    }
+
+    // Seguindo a segunda BFS, respeitando as condições de fluxo
+    fill(pred.begin(), pred.end(), -1); // Reseta o predecessor
+    if (bfs(newGraph, S, T, pred))
+    {
+        memorizeFlow(T, pred, flow);
+    }
+    else
+    {
+        cout << "Caminho não encontrado de S a T na segunda busca" << endl;
+        return;
+    }
+
+    // Construindo os caminhos finais
+    vector<int> path1, path2;
+
+    // Primeiro caminho
+    for (int cur = T; cur != -1; cur = flow[cur])
+    {
+        path1.push_back(cur);
+    }
+    reverse(path1.begin(), path1.end());
+
+    // Segundo caminho
+    for (int cur = T; cur != -1; cur = flow[cur])
+    {
+        if (flow[cur] != -1)
+        {
+            path2.push_back(flow[cur]);
+        }
+    }
+    reverse(path2.begin(), path2.end());
+
+    // Exibir resultados
+    cout << "Caminho 1 de S a T: ";
+    for (int node : path1)
+    {
+        cout << node << " ";
+    }
+    cout << endl;
+
+    cout << "Caminho 2 de T a S: ";
+    for (int node : path2)
+    {
+        cout << node << " ";
+    }
+    cout << endl;
+}
+
+int main()
+{
+    // Exemplo de criação do grafo
+    Graph g(4);
+    g.addEdge(0, 1);
+    g.addEdge(1, 2);
+    g.addEdge(2, 3);
+
+    // Encontrar dois caminhos entre S e T
+    findTwoPaths(g, 0, 3);
     return 0;
 }
