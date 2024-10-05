@@ -5,6 +5,7 @@
 #include <ctime>
 #include <stack>
 #include <chrono>
+#include <queue>
 
 using namespace std;
 
@@ -18,7 +19,6 @@ public:
         pai.resize(vertices - 1);
         LOWPT.resize(vertices);
     }
-    Graph() {}
 
     void addEdge(int u, int v)
     {
@@ -48,14 +48,14 @@ public:
         }
     }
 
-    void ChamadaInicial(int & cont)
+    void ChamadaInicial(int &cont, vector<int> &subgraph)
     {
         t = 0;
 
         for (int i = 0; i < TD.size(); i++)
         {
             if (TD[i] == 0)
-                dfs(i, cont);
+                dfs(i, cont, subgraph);
         }
         t = 0;
         TD.clear();
@@ -65,10 +65,11 @@ public:
         LOWPT.clear();
     }
 
-    void dfs(int v, int &cont)
+    void dfs(int v, int &cont, vector<int> &subgraph)
     {
         t += 1;
         TD[v] = t;
+        subgraph.push_back(v);
         for (int w : GetSucessores(v))
         {
             if (TD[w] == 0)
@@ -76,7 +77,7 @@ public:
                 // cout << "A aresta {(" << (v + 1) << "," << (w + 1) << ")} é de árvore" << endl;
                 pai[w] = v;
                 cont++;
-                dfs(w, cont);
+                dfs(w, cont, subgraph);
             }
             else
             {
@@ -90,7 +91,7 @@ public:
         TT[v] = t;
     }
 
-    bool isArticulation(int vertice)
+    bool isArticulation(int vertice, vector<int> &subgraph)
     {
         set<int> originalAdjList = adjList[vertice];
         for (int neighbor : originalAdjList)
@@ -101,19 +102,72 @@ public:
 
         int Count = 0;
 
-        ChamadaInicial(Count);
+        ChamadaInicial(Count, subgraph);
 
-        
-
-        
         adjList[vertice] = originalAdjList;
         for (int neighbor : originalAdjList)
         {
             adjList[neighbor].insert(vertice);
         }
 
-        
         return Count < vertices - 1; // Um vértice a menos por causa da remoção
+    }
+
+    pair<Graph, Graph> separarGrafo(vector<int> &vertexList)
+    {
+        // Criação dos subgrafos com o mesmo número de vértices
+        Graph subgraph1(vertices);
+        Graph subgraph2(vertices);
+
+        // Cria conjuntos para checar rapidamente se um vértice está no vertexList
+        set<int> vertexSet(vertexList.begin(), vertexList.end());
+
+        // Para cada vértice no grafo original
+        for (int u = 0; u < vertices; ++u)
+        {
+            for (int v : adjList[u])
+            {
+                // Se ambos os vértices estão na lista, adiciona a aresta ao subgrafo 1
+                if (vertexSet.count(u) && vertexSet.count(v))
+                {
+                    subgraph1.addEdge(u, v);
+                }
+                // Se ambos os vértices não estão na lista, adiciona ao subgrafo 2
+                else if (!vertexSet.count(u) && !vertexSet.count(v))
+                {
+                    subgraph2.addEdge(u, v);
+                }
+            }
+        }
+
+        return make_pair(subgraph1, subgraph2);
+    }
+    bool BFS(int v, int w)
+    {
+        
+        vector<int> L;
+        L.resize(vertices);
+        vector<int> nivel;
+        nivel.resize(vertices);
+        pai.clear();
+
+        queue<int> fila;
+        
+
+        for(int i = 0; i < vertices; i++){
+            t += 1;
+            fila.push(i);
+            while(!fila.empty()){
+                for(int wL : GetSucessores(i)){
+                    if(L[wL] == 0){
+
+                    }
+                }
+            }
+
+
+        }
+
     }
 
 public:
@@ -257,12 +311,26 @@ void printComponents(const vector<vector<pair<int, int>>> &Components)
     }
 }
 
+bool isComponent(Graph g)
+{
+}
+
 void getComponentByCut(Graph g, vector<vector<pair<int, int>>> &Components, vector<int> &vertices)
 {
+    stack<Graph> pilhaDeGrafos;
+    pilhaDeGrafos.push(g);
+    for (int i = 0; i < g.TD.size(); i++)
+    {
+        Graph gLinha = pilhaDeGrafos.top();
+        pilhaDeGrafos.pop();
 
-
-
-
+        if (gLinha.isArticulation(i, vertices))
+        {
+            auto [founded, notFounded] = g.separarGrafo(vertices);
+            int j = 0;
+            while (!founded.isArticulation(j))
+        }
+    }
 }
 
 int main()
