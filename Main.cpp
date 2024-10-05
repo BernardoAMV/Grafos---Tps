@@ -106,7 +106,7 @@ public:
         return sucessores;
     }
 
-    void printSuccessors(int vertice) const
+    void printSucessores(int vertice) const
     {
         cout << "Sucessores de " << vertice << ": ";
         for (int neighbor : adjList[vertice])
@@ -330,6 +330,7 @@ void findCycle(Graph &g, int S, int T)
     }
 }
 
+
 int main()
 
 {
@@ -343,6 +344,9 @@ int main()
 
     printAllEdges(graph);
 
-    findCycle(graph, 7, 9);
+    findCycle(graph, 5, 3);
+    
+    graph.printSucessores(3);
+    
     return 0;
 }
