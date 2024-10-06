@@ -1,0 +1,128 @@
+void depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, int &numPaths, bool &foundCycle, int parent)
+{
+    // Marca o nó atual como visitado
+    visited[current] = 1;
+
+    cout << "Visitando " << current << " , filho de " << parent << endl;
+
+    g.printSucessores(current);
+
+    cout << "Alvo atual: " << target << endl;
+
+    // Verifica se o alvo está na vizinhança do nó atual
+    bool targetInNeighborhood = false;
+    // Array de vizinhos não-explorados (armazenados para caso ciclo não seja encontrado no caminho realizado na primeira busca)
+    pair<int, int> unexploredNeighbors;
+
+    for (int neighbor : g.GetSucessores(current))
+    {
+        if (!visited[neighbor] && neighbor != parent)
+        {
+            unexploredNeighbors = make_pair(current, neighbor);
+        }
+        if (neighbor == target)
+        {
+            targetInNeighborhood = true;
+            break;
+        }
+    }
+
+    // Se o alvo estiver na vizinhança, força a ida para o alvo
+    if (targetInNeighborhood)
+    {
+        cout << "Alvo " << target << " encontrado na vizinhanca de " << current << ". Priorizando ida para " << target << endl;
+        parent = current;
+        visited[target] = 1;
+        cout << "Pai de " << target << " atualizado para " << parent << endl;
+        ++numPaths;
+        cout << "Numero de caminhos: " << numPaths << endl;
+        if (numPaths > 1)
+        {
+            foundCycle = true;
+            return;
+        }
+        for (int neighbor : g.GetSucessores(target))
+        {
+            // Evita revisitar o nó pai (necessário para evitar ciclos falsos)
+            if (!visited[neighbor] && neighbor != parent)
+            {
+                cout << "No target == current. Iniciando nova busca partindo de " << target << " e indo para " << neighbor << endl;
+                depthFirstSearch(g, neighbor, original, visited, target, numPaths, foundCycle, target);
+            }
+            else if (neighbor == original && neighbor != parent)
+            {
+                cout << "Ciclo encontrado vindo de " << current << " para " << neighbor << endl;
+                foundCycle = true; // Se o original for alcançado, indica que um ciclo foi encontrado
+                return;
+            }
+        }
+        return;
+    }
+
+    cout << "\n"
+         << endl;
+
+    // Verifica se o nó alvo é alcançado
+    // if (current == target)
+    // {
+    //     cout << "Pai de " << target << " = " << parent << endl;
+    //     // Continua a busca a partir do nó alvo
+    //     for (int neighbor : g.GetSucessores(current))
+    //     {
+    //         // Evita revisitar o nó pai (necessário para evitar ciclos falsos)
+    //         if (!visited[neighbor] && neighbor != parent)
+    //         {
+    //             cout << "No target == current. Iniciando nova busca partindo de " << current << " e indo para " << neighbor << endl;
+    //             if (numPaths > 1)
+    //             {
+    //                 foundCycle = true;
+    //                 break;
+    //             }
+    //             depthFirstSearch(g, neighbor, original, visited, target, numPaths, foundCycle, current);
+    //         }
+    //         else if (neighbor == original && neighbor != parent)
+    //         {
+    //             cout << "Ciclo encontrado vindo de " << current << " para " << neighbor << endl;
+    //             foundCycle = true; // Se o original for alcançado, indica que um ciclo foi encontrado
+    //             return;
+    //         }
+    //     }
+    //     return;
+    // }
+
+    // Continua a busca a partir do nó atual
+    for (int neighbor : g.GetSucessores(current))
+    {
+        if (neighbor == target && neighbor != parent)
+        {
+            ++numPaths;
+            foundCycle = true;
+        }
+        // Evita revisitar o nó pai (necessário para evitar ciclos falsos)
+        if (!visited[neighbor] && neighbor != parent)
+        {
+            depthFirstSearch(g, neighbor, target, visited, original, numPaths, foundCycle, current);
+        }
+    }
+}
+
+void findCycle(Graph &g, int S, int T)
+{
+    vector<int> visited(g.vertices, 0); // Inicializa o array visited com 0
+    bool foundCycle = false;            // Variável para verificar se o ciclo foi encontrado
+    int numPaths = 0;
+
+    // depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, bool &numPaths, bool &foundCycle, int parent)
+    // Inicia a busca em profundidade
+    depthFirstSearch(g, S, T, visited, S, numPaths, foundCycle, -1);
+
+    // Verifica se um ciclo foi encontrado
+    if (foundCycle)
+    {
+        cout << "CICLO ENCONTRADO ENTRE OS VERTICES " << S << " E " << T << ": SIM" << endl; // Se um ciclo foi encontrado
+    }
+    else
+    {
+        cout << "CICLO ENTRE OS VERTICES " << S << " e " << T << ": NAO" << endl; // Se não foi encontrado
+    }
+}

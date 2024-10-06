@@ -4,7 +4,7 @@
 #include <set>
 #include <ctime>
 #include <stack>
-#include <unordered_set>
+#include <algorithm>
 
 using namespace std;
 
@@ -146,6 +146,7 @@ Graph generateGraph(int vertices, int edges)
     return graph;
 }
 
+// Grafo teórico introduzido nas orientações do trabalho
 Graph build_example_graph()
 {
     Graph g(12);
@@ -169,12 +170,25 @@ Graph build_example_graph()
     return g;
 }
 
+// Grafo teórico de 3 vértices lineares acíclicos
 Graph build_example_graph2()
 {
 
     Graph g(4);
     g.addEdge(1, 2);
     g.addEdge(2, 3);
+
+    return g;
+}
+
+// // Grafo teórico de 3 vértices lineares com ciclo (triângulo)
+Graph build_example_graph3()
+{
+
+    Graph g(4);
+    g.addEdge(1, 2);
+    g.addEdge(2, 3);
+    g.addEdge(3, 1);
 
     return g;
 }
@@ -246,20 +260,10 @@ void printComponents(const vector<vector<pair<int, int>>> &Components)
     }
 }
 
-void printAllEdgesTwice(const Graph &g)
-{
-    for (int i = 0; i < g.vertices; ++i)
-    {
-        for (int neighbor : g.adjList[i])
-        {
-            cout << "(" << i << ", " << neighbor << ")" << endl;
-        }
-    }
-}
-
 void printAllEdges(const Graph &g)
 {
     vector<vector<bool>> printed(g.vertices, vector<bool>(g.vertices, false)); // Matriz de controle para arestas já impressas
+    cout << "Arestas do grafo:" << endl;
 
     for (int i = 0; i < g.vertices; ++i)
     {
@@ -274,79 +278,182 @@ void printAllEdges(const Graph &g)
     }
 }
 
-
-void depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, bool &found, int parent)
+void depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, int &numPaths, bool &foundCycle, int parent)
 {
     // Marca o nó atual como visitado
     visited[current] = 1;
 
-    // Verifica se o nó alvo é alcançado
-    if (current == target)
+    // cout << "Visitando " << current << " , filho de " << parent << endl;
+
+    // g.printSucessores(current);
+
+    // cout << "Alvo atual: " << target << endl;
+
+    // Verifica se o alvo está na vizinhança do nó atual
+    bool targetInNeighborhood = false;
+    // Array de vizinhos não-explorados (armazenados para caso ciclo não seja encontrado no caminho realizado na primeira busca)
+
+    for (int neighbor : g.GetSucessores(current))
     {
-        // Continua a busca a partir do nó alvo
-        for (int neighbor : g.GetSucessores(current))
+        if (neighbor == target)
+        {
+            targetInNeighborhood = true;
+            break;
+        }
+    }
+
+    // Se o alvo estiver na vizinhança, força a ida para o alvo
+    if (targetInNeighborhood)
+    {
+        // cout << "Alvo " << target << " encontrado na vizinhanca de " << current << ". Priorizando ida para " << target << endl;
+        parent = current;
+        visited[target] = 1;
+        // cout << "Pai de " << target << " atualizado para " << parent << endl;
+        ++numPaths;
+        // cout << "Numero de caminhos: " << numPaths << endl;
+        if (numPaths > 1)
+        {
+            foundCycle = true;
+            return;
+        }
+        for (int neighbor : g.GetSucessores(target))
         {
             // Evita revisitar o nó pai (necessário para evitar ciclos falsos)
             if (!visited[neighbor] && neighbor != parent)
             {
-                depthFirstSearch(g, neighbor, target, visited, original, found, current);
+                // cout << "No target == current. Iniciando nova busca partindo de " << target << " e indo para " << neighbor << endl;
+                depthFirstSearch(g, neighbor, original, visited, target, numPaths, foundCycle, target);
             }
             else if (neighbor == original && neighbor != parent)
             {
-                found = true; // Se o original for alcançado, indica que um ciclo foi encontrado
+                // cout << "Ciclo encontrado vindo de " << current << " para " << neighbor << endl;
+                foundCycle = true; // Se o original for alcançado, indica que um ciclo foi encontrado
                 return;
             }
         }
         return;
     }
 
+    // cout << endl;
+
     // Continua a busca a partir do nó atual
     for (int neighbor : g.GetSucessores(current))
     {
+        if (neighbor == target && neighbor != parent)
+        {
+            ++numPaths;
+            foundCycle = true;
+        }
         // Evita revisitar o nó pai (necessário para evitar ciclos falsos)
         if (!visited[neighbor] && neighbor != parent)
         {
-            depthFirstSearch(g, neighbor, target, visited, original, found, current);
+            depthFirstSearch(g, neighbor, target, visited, original, numPaths, foundCycle, current);
         }
     }
 }
 
-void findCycle(Graph &g, int S, int T)
+void printCycle(Graph &g, int S, int T)
 {
     vector<int> visited(g.vertices, 0); // Inicializa o array visited com 0
-    bool found = false;                 // Variável para verificar se o ciclo foi encontrado
+    bool foundCycle = false;            // Variável para verificar se o ciclo foi encontrado
+    int numPaths = 0;
 
+    // depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, bool &numPaths, bool &foundCycle, int parent)
     // Inicia a busca em profundidade
-    depthFirstSearch(g, S, T, visited, S, found, -1);
+    depthFirstSearch(g, S, T, visited, S, numPaths, foundCycle, -1);
 
     // Verifica se um ciclo foi encontrado
-    if (found)
+    if (foundCycle)
     {
-        cout << "Ciclo encontrado entre os vértices " << S << " e " << T << ": Yes" << endl; // Se um ciclo foi encontrado
+        cout << "CICLO ENCONTRADO ENTRE OS VERTICES " << S << " E " << T << endl; // Se um ciclo foi encontrado
     }
     else
     {
-        cout << "Ciclo entre os vértices " << S << " e " << T << ": No" << endl; // Se não foi encontrado
+        cout << "NAO HA CICLO ENTRE OS VERTICES " << S << " E " << T << endl; // Se não foi encontrado
     }
 }
 
+void printAllCycles(Graph &g)
+{
+    vector<vector<bool>> printed(g.vertices, vector<bool>(g.vertices, false)); // Matriz de controle para arestas já impressas
+
+    for (int i = 1; i < g.vertices; ++i)
+    {
+        for (int j = 1; j < g.vertices; ++j)
+        {
+            if (i != j && !printed[i][j] && !printed[j][i])
+            {
+                printCycle(g, i, j);
+                printed[i][j] = printed[j][i] = true; // Marca as arestas como impressas
+            }
+        }
+    }
+}
+
+bool isCycle(Graph &g, int S, int T)
+{
+    vector<int> visited(g.vertices, 0); // Inicializa o array visited com 0
+    bool foundCycle = false;            // Variável para verificar se o ciclo foi encontrado
+    int numPaths = 0;
+
+    // depthFirstSearch(Graph &g, int current, int target, vector<int> &visited, int original, bool &numPaths, bool &foundCycle, int parent)
+    // Inicia a busca em profundidade
+    depthFirstSearch(g, S, T, visited, S, numPaths, foundCycle, -1);
+
+    // Verifica se um ciclo foi encontrado
+    if (foundCycle)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void printAllCycles(Graph &g)
+{
+    vector<vector<bool>> printed(g.vertices, vector<bool>(g.vertices, false)); // Matriz de controle para arestas já impressas
+
+    for (int i = 1; i < g.vertices; ++i)
+    {
+        for (int j = 1; j < g.vertices; ++j)
+        {
+            if (i != j && !printed[i][j] && !printed[j][i])
+            {
+                printCycle(g, i, j);
+                printed[i][j] = printed[j][i] = true; // Marca as arestas como impressas
+            }
+        }
+    }
+}
 
 int main()
 
 {
 
     // Defina o número de vértices e arestas
-    vector<vector<pair<int, int>>> Components;
-    Graph graph = build_example_graph();
-    TarjanInicial(graph,1,-1,Components);
+    // vector<vector<pair<int, int>>> Components;
 
-    printComponents(Components);
+    Graph zenilton = build_example_graph3();
 
-    // printAllEdges(graph);
+    Graph randomGraph = generateGraph(12, 20);
 
-    // findCycle(graph, 5, 3);
-    
-    // graph.printSucessores(3);
-    
+    // printAllEdges(randomGraph);
+
+    // TarjanInicial(graph, 1, -1, Components);
+
+    // printComponents(Components);
+
+    // printAllEdges(zenilton);
+
+    // Unico cenario de zebra no grafo de exemplo
+    // printCycle(zenilton, 4, 11);
+    // printAllCycles(zenilton);
+
+    // printAllCycles(randomGraph);
+
+    //printAllCycles(zenilton);
+
     return 0;
 }
