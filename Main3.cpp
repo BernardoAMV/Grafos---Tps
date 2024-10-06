@@ -1,9 +1,10 @@
 #include <iostream>
 #include <vector>
-#include <random>
 #include <set>
-#include <ctime>
 #include <stack>
+#include <unordered_set>
+#include <random>
+#include <ctime>
 #include <algorithm>
 
 using namespace std;
@@ -11,20 +12,32 @@ using namespace std;
 class Graph
 {
 public:
+    int vertices;
+    vector<set<int>> adjList; // Usando set para evitar arestas duplicadas
+
     Graph(int vertices) : vertices(vertices)
     {
-        adjList.resize(vertices);
-        TT.resize(vertices);
-        TD.resize(vertices);
-        pai.resize(vertices - 1);
-        LOWPT.resize(vertices);
+        adjList.resize(vertices); // Certifique-se de que o tamanho seja o correto
     }
 
     void addEdge(int u, int v)
     {
+        if (u >= vertices || v >= vertices)
+            return; // Proteção contra índices inválidos
         adjList[u].insert(v);
         adjList[v].insert(u); // Para um grafo não direcionado
     }
+
+    const set<int> &getVizinhos(int v) const
+    {
+        return adjList[v];
+    }
+
+    int getN() const
+    {
+        return vertices;
+    }
+
     vector<int> getVertices()
     {
         vector<int> verticesArray;
@@ -47,48 +60,8 @@ public:
             cout << endl;
         }
     }
-    void ChamadaInicial()
-    {
-        t = 0;
-        int cont = 0;
-
-        for (int i = 0; i < TD.size(); i++)
-        {
-            if (TD[i] == 0)
-                buscaProfundidade(i, &cont);
-        }
-
-        cout << "O número de ciclos do grafo é: " << cont << endl;
-    }
-
-    void buscaProfundidade(int v, int *cont)
-    {
-        t += 1;
-        TD[v] = t;
-        for (int w : GetSucessores(v))
-        {
-            if (TD[w] == 0)
-            {
-                cout << "A aresta {(" << (v + 1) << "," << (w + 1) << ")} é de árvore" << endl;
-                pai[w] = v;
-                buscaProfundidade(w, cont);
-            }
-            else
-            {
-                if (TT[w] == 0 and w != pai[v])
-                {
-                    cout << "A aresta {(" << (v + 1) << ", " << (w + 1) << ")} é de retorno" << endl;
-                    (*cont)++;
-                }
-            }
-        }
-        t += 1;
-        TT[v] = t;
-    }
 
 public:
-    int vertices;
-    vector<set<int>> adjList; // Usando set para evitar arestas duplicadas
     int t = 0;
     vector<int> TD;
     vector<int> TT;
@@ -114,6 +87,23 @@ public:
             cout << neighbor << " ";
         }
         cout << endl;
+    }
+};
+
+class Edge
+{
+public:
+    int u, v;
+    Edge(int u, int v) : u(min(u, v)), v(max(u, v)) {} // Ordena u e v
+
+    bool operator==(const Edge &other) const
+    {
+        return u == other.u && v == other.v;
+    }
+
+    bool operator<(const Edge &other) const
+    {
+        return tie(u, v) < tie(other.u, other.v); // Comparação ordenada
     }
 };
 
@@ -147,7 +137,7 @@ Graph generateGraph(int vertices, int edges)
 }
 
 // Grafo teórico introduzido nas orientações do trabalho
-Graph build_example_graph()
+Graph zenilton()
 {
     Graph g(12);
 
@@ -171,7 +161,7 @@ Graph build_example_graph()
 }
 
 // Grafo teórico de 3 vértices lineares acíclicos
-Graph build_example_graph2()
+Graph casoTeste1()
 {
 
     Graph g(4);
@@ -181,8 +171,8 @@ Graph build_example_graph2()
     return g;
 }
 
-// // Grafo teórico de 3 vértices lineares com ciclo (triângulo)
-Graph build_example_graph3()
+// Grafo teórico de 3 vértices lineares com ciclo (triângulo)
+Graph casoTeste2()
 {
 
     Graph g(4);
@@ -411,49 +401,206 @@ bool isCycle(Graph &g, int S, int T)
     }
 }
 
-void printAllCycles(Graph &g)
+class Conjuntos
 {
-    vector<vector<bool>> printed(g.vertices, vector<bool>(g.vertices, false)); // Matriz de controle para arestas já impressas
+public:
+    vector<set<Edge>> componentes; // Usar set para evitar duplicação de arestas
 
-    for (int i = 1; i < g.vertices; ++i)
+    Conjuntos(int n)
     {
-        for (int j = 1; j < g.vertices; ++j)
+        componentes.resize(n);
+    }
+
+    void add(int component, const Edge &edge)
+    {
+        if (component < componentes.size())
         {
-            if (i != j && !printed[i][j] && !printed[j][i])
+            componentes[component].insert(edge); // Arestas duplicadas serão ignoradas automaticamente
+        }
+    }
+};
+
+class M1
+{
+private:
+    Graph &lista;
+    vector<bool> visited;
+    unordered_set<int> addedVertices;
+    set<Edge> edges;
+
+    bool specialDFS(int initial, int target, int avoiding)
+    {
+        stack<int> stack;
+        stack.push(initial);
+
+        while (!stack.empty())
+        {
+            int current = stack.top();
+            stack.pop();
+
+            if (current == target)
             {
-                printCycle(g, i, j);
-                printed[i][j] = printed[j][i] = true; // Marca as arestas como impressas
+                return true;
             }
+
+            if (!visited[current])
+            {
+                visited[current] = true;
+
+                for (int neighbor : lista.getVizinhos(current))
+                {
+                    if (neighbor == avoiding)
+                        continue;
+                    if (current == initial && neighbor == target)
+                        continue;
+                    if (!visited[neighbor])
+                    {
+                        stack.push(neighbor);
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    bool areAdjacentsInSameCycle(int v, int w)
+    {
+        visited.assign(lista.getN(), false); // Garante o tamanho correto de 'visited'
+        return specialDFS(v, w, -1);
+    }
+
+    bool areGrandparentAndGrandchildInSameCycle(int v, int w, int son)
+    {
+        visited.assign(lista.getN(), false); // Garante o tamanho correto de 'visited'
+        return specialDFS(v, w, son);
+    }
+
+    void adicionarVertice(int start, unordered_set<int> &currentCycleVertices)
+    {
+        stack<int> stack;
+        stack.push(start);
+
+        while (!stack.empty())
+        {
+            int v = stack.top();
+            stack.pop();
+
+            if (!currentCycleVertices.count(v))
+            {
+                currentCycleVertices.insert(v);
+                addedVertices.insert(v);
+
+                for (int neighbor : lista.getVizinhos(v))
+                {
+                    if (currentCycleVertices.count(neighbor))
+                        continue;
+                    if (currentCycleVertices.size() < 2)
+                    {
+                        if (areAdjacentsInSameCycle(v, neighbor))
+                        {
+                            stack.push(neighbor);
+                        }
+                    }
+                    else
+                    {
+                        if (areGrandparentAndGrandchildInSameCycle(start, neighbor, v))
+                        {
+                            stack.push(neighbor);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+public:
+    M1(Graph &lista) : lista(lista) {}
+
+    Conjuntos executar()
+    {
+        Conjuntos conjuntos(lista.getN());
+        unordered_set<int> currentCycleVertices;
+
+        // Preencher o conjunto de arestas
+        for (int i = 0; i < lista.getN(); i++)
+        {
+            for (int neighbor : lista.getVizinhos(i))
+            {
+                if (i != neighbor)
+                { // Evitar adicionar arestas de laço
+                    edges.insert(Edge(i, neighbor));
+                }
+            }
+        }
+
+        int currentComponent = -1;
+
+        for (int i = 0; i < lista.getN(); i++)
+        {
+            if (!addedVertices.count(i))
+            {
+                currentCycleVertices.clear();
+                visited.assign(lista.getN(), false); // Reinicializar visited com o tamanho correto
+
+                adicionarVertice(i, currentCycleVertices);
+
+                currentComponent++;
+                for (int vertex : currentCycleVertices)
+                {
+                    for (int neighbor : lista.getVizinhos(vertex))
+                    {
+                        if (currentCycleVertices.count(neighbor))
+                        {
+                            conjuntos.add(currentComponent, Edge(vertex, neighbor));
+                            edges.erase(Edge(vertex, neighbor));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Adiciona as arestas restantes que não formam ciclos
+        for (const Edge &edge : edges)
+        {
+            currentComponent++;
+            conjuntos.add(currentComponent, edge);
+        }
+
+        return conjuntos;
+    }
+};
+
+// Função para imprimir os componentes sem duplicatas
+void imprimirComponentes(const Conjuntos &componentes)
+{
+    for (int i = 0; i < componentes.componentes.size(); i++)
+    {
+        if (!componentes.componentes[i].empty())
+        {
+            cout << "Componente " << i << ": ";
+            for (const Edge &edge : componentes.componentes[i])
+            {
+                cout << "(" << edge.u << ", " << edge.v << ") ";
+            }
+            cout << endl;
         }
     }
 }
 
+
 int main()
-
 {
+    Graph g = zenilton();
+    Graph denseGraph = generateGraph(120, 240);
 
-    // Defina o número de vértices e arestas
-    // vector<vector<pair<int, int>>> Components;
+    M1 metodo1(g);
+    M1 metodo1Denso(denseGraph);
+    Conjuntos componentes = metodo1.executar();
+    Conjuntos componentesDensos = metodo1Denso.executar();
 
-    Graph zenilton = build_example_graph3();
+    // printAllCycles(denseGraph);
 
-    Graph randomGraph = generateGraph(12, 20);
-
-    // printAllEdges(randomGraph);
-
-    // TarjanInicial(graph, 1, -1, Components);
-
-    // printComponents(Components);
-
-    // printAllEdges(zenilton);
-
-    // Unico cenario de zebra no grafo de exemplo
-    // printCycle(zenilton, 4, 11);
-    // printAllCycles(zenilton);
-
-    // printAllCycles(randomGraph);
-
-    //printAllCycles(zenilton);
+    imprimirComponentes(componentesDensos);
 
     return 0;
 }

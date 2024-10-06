@@ -336,17 +336,17 @@ int main()
 {
 
     // Defina o número de vértices e arestas
-    // vector<vector<pair<int, int>>> Components;
+    vector<vector<pair<int, int>>> Components;
     Graph graph = build_example_graph();
-    // TarjanInicial(graph,1,-1,Components);
+    TarjanInicial(graph,1,-1,Components);
 
-    // printComponents(Components);
+    printComponents(Components);
 
-    printAllEdges(graph);
+    // printAllEdges(graph);
 
-    findCycle(graph, 5, 3);
+    // findCycle(graph, 5, 3);
     
-    graph.printSucessores(3);
+    // graph.printSucessores(3);
     
     return 0;
 }
