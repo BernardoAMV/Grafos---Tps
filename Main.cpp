@@ -123,7 +123,7 @@ public:
             adjList[neighbor].insert(vertice);
         }
         set<int> size = getVertices();
-        return Count + 1 < size.size() - 1; // 2 a mais por conta do metodo nao contar o nó raiz e da remoção
+        return Count + 1 < size.size() - 1; // 1 a mais por conta do metodo nao contar o nó raiz e da remoção
         }
     
 
@@ -132,13 +132,20 @@ public:
     Graph subgraph1(vertices);
     Graph subgraph2(vertices);
     // Verifica se há exatamente 3 vértices e se o vértice comum tem grau 2
-    if (getVertices().size() == 3 && adjList[verticeComum].size() == 2) {
+    if (adjList[verticeComum].size() == getVertices().size() - 1) {
+        set<int> sucessor1 = adjList[verticeComum];
+        int cont = 0;
         // Adiciona o vértice comum (articulação) a ambos os subgrafos
-         set<int> sucessor1 = adjList[verticeComum];
-         std::set<int>::iterator it = sucessor1.begin();
-            subgraph1.addEdge(verticeComum,*it);
-            ++it;
-            subgraph2.addEdge(verticeComum, *it);
+        for(std::set<int>::iterator it = sucessor1.begin(); it != sucessor1.end(); it++){
+            if(cont % 2 == 0){
+                subgraph1.addEdge(verticeComum, *it);
+            }
+            else{
+                subgraph2.addEdge(verticeComum, *it);
+            }
+            cont++;
+        }
+            
             return {subgraph1,subgraph2};
         
     }   else{
@@ -605,7 +612,7 @@ int main()
 
 {
 
-    std::vector<int> verticesList = {100}; // 100, 1.000, 10.000 e 100.000 vértices
+    std::vector<int> verticesList = {100, 1000, 10000, 100000}; // 100, 1.000, 10.000 e 100.000 vértices
 
         int vertices = verticesList[0];
         vector<vector<pair<int, int>>> Components;
@@ -613,7 +620,7 @@ int main()
         auto startFunction = std::chrono::high_resolution_clock::now();
         auto endFunction1 = std::chrono::high_resolution_clock::now();
         auto endFunction2 = std::chrono::high_resolution_clock::now();
-         for (int i = 0; i < 30; i++)
+         for (int i = 0; i < 5; i++)
         {
           int edges = vertices * 1.5;
         Graph graph = generateGraph(vertices,edges);
