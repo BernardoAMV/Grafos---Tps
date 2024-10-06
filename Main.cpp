@@ -6,6 +6,7 @@
 #include <stack>
 #include <chrono>
 #include <queue>
+#include <unordered_map>
 
 using namespace std;
 
@@ -18,21 +19,26 @@ public:
         TD.resize(vertices);
         pai.resize(vertices - 1);
         LOWPT.resize(vertices);
+        TT.resize(vertices);
     }
 
     void addEdge(int u, int v)
     {
         adjList[u].insert(v);
-        adjList[v].insert(u); // Para um grafo não direcionado
+        adjList[v].insert(u);
     }
-    vector<int> getVertices()
+    std::set<int> getVertices()
     {
-        vector<int> verticesArray;
+        std::set<int> Vertices;
         for (int i = 0; i < vertices; ++i)
         {
-            verticesArray.push_back(i); // Adiciona cada vértice ao vetor
+            
+            if (!adjList[i].empty())
+            {
+                Vertices.insert(i);
+            }
         }
-        return verticesArray;
+        return Vertices;
     }
 
     void printGraph()
@@ -51,18 +57,24 @@ public:
     void ChamadaInicial(int &cont, vector<int> &subgraph)
     {
         t = 0;
-
-        for (int i = 0; i < TD.size(); i++)
+        for (int i = 0; i < vertices; ++i)
         {
-            if (TD[i] == 0)
+            if (!adjList[i].empty())
+            { // Verifica se o vértice ainda tem vizinhos, ou seja, ainda está no grafo
                 dfs(i, cont, subgraph);
+                break;
+            }
         }
+
         t = 0;
         TD.clear();
-        adjList.clear();
-        TD.clear();
         pai.clear();
+        TT.clear();
         LOWPT.clear();
+        TD.resize(vertices);
+        pai.resize(vertices - 1);
+        LOWPT.resize(vertices);
+        TT.resize(vertices);
     }
 
     void dfs(int v, int &cont, vector<int> &subgraph)
@@ -92,7 +104,8 @@ public:
     }
 
     bool isArticulation(int vertice, vector<int> &subgraph)
-    {
+    {   
+        
         set<int> originalAdjList = adjList[vertice];
         for (int neighbor : originalAdjList)
         {
@@ -109,66 +122,225 @@ public:
         {
             adjList[neighbor].insert(vertice);
         }
+        set<int> size = getVertices();
+        return Count + 1 < size.size() - 1; // 2 a mais por conta do metodo nao contar o nó raiz e da remoção
+        }
+    
 
-        return Count < vertices - 1; // Um vértice a menos por causa da remoção
+    std::pair<Graph, Graph> separarGrafo(const std::vector<int> &Vertices, int verticeComum) {
+    // Inicializa os subgrafos com o mesmo número de vértices que o grafo original
+    Graph subgraph1(vertices);
+    Graph subgraph2(vertices);
+    // Verifica se há exatamente 3 vértices e se o vértice comum tem grau 2
+    if (getVertices().size() == 3 && adjList[verticeComum].size() == 2) {
+        // Adiciona o vértice comum (articulação) a ambos os subgrafos
+         set<int> sucessor1 = adjList[verticeComum];
+         std::set<int>::iterator it = sucessor1.begin();
+            subgraph1.addEdge(verticeComum,*it);
+            ++it;
+            subgraph2.addEdge(verticeComum, *it);
+            return {subgraph1,subgraph2};
+        
+    }   else{
+    // Conjunto de vértices do subgrafo 1
+    std::set<int> verticesSet(Vertices.begin(), Vertices.end());
+
+    // Se a lista de vértices estiver vazia, adicionar o vértice comum ao conjunto para garantir que o vértice seja separado corretamente
+    if (verticesSet.empty()) {
+        verticesSet.insert(verticeComum);
     }
 
-    pair<Graph, Graph> separarGrafo(vector<int> &vertexList)
-    {
-        // Criação dos subgrafos com o mesmo número de vértices
-        Graph subgraph1(vertices);
-        Graph subgraph2(vertices);
+    // Adiciona arestas ao subgrafo 1
+    for (int v : Vertices) {
+        for (int neighbor : adjList[v]) {
+            // Só adiciona aresta se o vizinho também estiver no subgrafo 1
+            if (verticesSet.find(neighbor) != verticesSet.end()) {
+                subgraph1.addEdge(v, neighbor);
+            }
+        }
+    }
 
-        // Cria conjuntos para checar rapidamente se um vértice está no vertexList
-        set<int> vertexSet(vertexList.begin(), vertexList.end());
-
-        // Para cada vértice no grafo original
-        for (int u = 0; u < vertices; ++u)
-        {
-            for (int v : adjList[u])
-            {
-                // Se ambos os vértices estão na lista, adiciona a aresta ao subgrafo 1
-                if (vertexSet.count(u) && vertexSet.count(v))
-                {
-                    subgraph1.addEdge(u, v);
-                }
-                // Se ambos os vértices não estão na lista, adiciona ao subgrafo 2
-                else if (!vertexSet.count(u) && !vertexSet.count(v))
-                {
-                    subgraph2.addEdge(u, v);
+    // Adiciona arestas ao subgrafo 2 (vértices que não estão no subgrafo 1)
+    for (int v = 0; v < vertices; ++v) {
+        if (verticesSet.find(v) == verticesSet.end()) { // Se o vértice não estiver no subgrafo 1
+            for (int neighbor : adjList[v]) {
+                if (verticesSet.find(neighbor) == verticesSet.end()) { // Ambos v e seu vizinho não estão no subgrafo 1
+                    subgraph2.addEdge(v, neighbor);
                 }
             }
         }
-
-        return make_pair(subgraph1, subgraph2);
     }
-    bool BFS(int v, int w)
-    {
-        
-        vector<int> L;
-        L.resize(vertices);
-        vector<int> nivel;
-        nivel.resize(vertices);
-        pai.clear();
 
-        queue<int> fila;
-        
+    // Adiciona o vértice comum (articulação) a ambos os subgrafos
+    for (int neighbor : adjList[verticeComum]) {
+        if (verticesSet.find(neighbor) != verticesSet.end()) {
+            subgraph1.addEdge(verticeComum, neighbor);
+        } else {
+            subgraph2.addEdge(verticeComum, neighbor);
+        }
+    }
 
-        for(int i = 0; i < vertices; i++){
-            t += 1;
-            fila.push(i);
-            while(!fila.empty()){
-                for(int wL : GetSucessores(i)){
-                    if(L[wL] == 0){
-
-                    }
-                }
-            }
+    return {subgraph1, subgraph2};
+    }
+}
 
 
+    bool BFS(int v, int w, const Graph& G, vector<int>& parent) {
+    vector<bool> visited(G.adjList.size(), false);
+    queue<int> q;
+
+    // Verifica se o vértice inicial ou final estão vazios
+    if (G.adjList[v].empty() || G.adjList[w].empty()) {
+        return false;  // Não pode haver caminho se um dos vértices estiver vazio
+    }
+
+    // Inicializa a BFS a partir de 'v'
+    visited[v] = true;
+    parent[v] = -1;  // v não tem pai
+    q.push(v);
+
+    while (!q.empty()) {
+        int curr = q.front();
+        q.pop();
+
+        // Se encontrar o vértice 'w', retorne true
+        if (curr == w) {
+            return true;
         }
 
+        // Explora os vizinhos do vértice atual
+        for (int neighbor : G.adjList[curr]) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                parent[neighbor] = curr;  // Registra o pai
+                q.push(neighbor);
+            }
+        }
     }
+
+    return false;  // Não encontrou caminho de 'v' até 'w'
+}
+
+bool findSecondPath(int v, int w, const Graph& G, const vector<int>& firstPath) {
+    vector<bool> visited(G.adjList.size(), false);
+    queue<int> q;
+    vector<int> parent(G.adjList.size(), -1);
+
+    // Verifica se o vértice inicial ou final estão vazios
+    if (G.adjList[v].empty() || G.adjList[w].empty()) {
+        return false;  // Não pode haver caminho se um dos vértices estiver vazio
+    }
+
+    // Marca os vértices do primeiro caminho como visitados (exceto 'v' e 'w')
+    for (int vertex : firstPath) {
+        if (vertex != v && vertex != w) {
+            visited[vertex] = true;
+        }
+    }
+
+    // Executa uma nova BFS para encontrar o segundo caminho disjunto
+    visited[v] = true;
+    q.push(v);
+
+    while (!q.empty()) {
+        int curr = q.front();
+        q.pop();
+
+        // Se encontrar 'w', um segundo caminho foi encontrado
+        if (curr == w) {
+            return true;
+        }
+
+        // Explora os vizinhos
+        for (int neighbor : G.adjList[curr]) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                parent[neighbor] = curr;
+                q.push(neighbor);
+            }
+        }
+    }
+
+    return false;  // Não encontrou segundo caminho disjunto
+}
+
+bool isThereTwoDisjointPaths(int v, int w, const Graph& G) {
+    // Verifica se existem dois caminhos disjuntos entre v e w usando BFS
+
+    // Primeiro caminho
+    vector<bool> visited1(G.vertices, false);
+    vector<int> parent1(G.vertices, -1);
+    queue<int> q1;
+
+    q1.push(v);
+    visited1[v] = true;
+
+    bool foundFirstPath = false;
+
+    // Encontrando o primeiro caminho entre v e w
+    while (!q1.empty() && !foundFirstPath) {
+        int curr = q1.front();
+        q1.pop();
+
+        for (int neighbor : G.adjList[curr]) {
+            if (!visited1[neighbor]) {
+                visited1[neighbor] = true;
+                parent1[neighbor] = curr;
+
+                if (neighbor == w) {
+                    foundFirstPath = true;
+                    break;
+                }
+
+                q1.push(neighbor);
+            }
+        }
+    }
+
+    // Se não encontrou o primeiro caminho, não existem dois caminhos disjuntos
+    if (!foundFirstPath) {
+        return false;
+    }
+
+    // Marcar os vértices que fazem parte do primeiro caminho
+    vector<bool> path1(G.vertices, false);
+    int curr = w;
+    while (curr != -1) {
+        path1[curr] = true;
+        curr = parent1[curr];
+    }
+
+    // Segundo caminho (evitar vértices do primeiro caminho)
+    vector<bool> visited2(G.vertices, false);
+    queue<int> q2;
+
+    q2.push(v);
+    visited2[v] = true;
+
+    bool foundSecondPath = false;
+
+    while (!q2.empty() && !foundSecondPath) {
+        int curr = q2.front();
+        q2.pop();
+
+        for (int neighbor : G.adjList[curr]) {
+            // Evitar usar vértices que fazem parte do primeiro caminho
+            if (!visited2[neighbor] && !path1[neighbor]) {
+                visited2[neighbor] = true;
+
+                if (neighbor == w) {
+                    foundSecondPath = true;
+                    break;
+                }
+
+                q2.push(neighbor);
+            }
+        }
+    }
+
+    return foundSecondPath; // Retorna true se encontrou dois caminhos disjuntos
+}
+
 
 public:
     int vertices;
@@ -180,14 +352,9 @@ public:
     vector<int> LOWPT;
     stack<pair<int, int>> edges;
 
-    vector<int> GetSucessores(int vertice)
+    const set<int> &GetSucessores(int vertice)
     {
-        std::vector<int> sucessores;
-        for (int neighbor : adjList[vertice])
-        {
-            sucessores.push_back(neighbor);
-        }
-        return sucessores;
+        return adjList[vertice];
     }
 };
 
@@ -207,7 +374,7 @@ Graph generateGraph(int vertices, int edges)
         int u = dis(gen);
         int v = dis(gen);
         if (u != v)
-        { // Evita loops
+        { 
             edgeSet.insert({std::min(u, v), std::max(u, v)});
         }
     }
@@ -293,7 +460,7 @@ void TarjanInicial(Graph &g, int v, int u, vector<vector<pair<int, int>>> &Compo
             {
                 g.edges.pop();
             }
-            Tarjan(g, v, -1, Components);
+            Tarjan(g, i, -1, Components);
         }
     }
 }
@@ -311,53 +478,158 @@ void printComponents(const vector<vector<pair<int, int>>> &Components)
     }
 }
 
-bool isComponent(Graph g)
-{
-}
-
-void getComponentByCut(Graph g, vector<vector<pair<int, int>>> &Components, vector<int> &vertices)
-{
-    stack<Graph> pilhaDeGrafos;
-    pilhaDeGrafos.push(g);
-    for (int i = 0; i < g.TD.size(); i++)
-    {
-        Graph gLinha = pilhaDeGrafos.top();
-        pilhaDeGrafos.pop();
-
-        if (gLinha.isArticulation(i, vertices))
-        {
-            auto [founded, notFounded] = g.separarGrafo(vertices);
-            int j = 0;
-            while (!founded.isArticulation(j))
+bool isComponent(Graph& g) {
+    // Verifica se o subgrafo é vazio
+    bool isEmpty = true;
+    for (int i = 0; i < g.vertices; i++) {
+        if (!g.adjList[i].empty()) {
+            isEmpty = false;
+            break;
         }
     }
+
+    // Se o subgrafo for vazio, retorna false
+    if (isEmpty) {
+        return false;
+    }
+
+    // Verifica se existem dois caminhos disjuntos entre todos os pares de vértices conectados
+    for (int i = 0; i < g.vertices; i++) {
+        for (int j = i + 1; j < g.vertices; j++) {
+            // Verifica se ambos os vértices têm vizinhos (não são vazios)
+            if (!g.adjList[i].empty() && !g.adjList[j].empty()) {
+                // Deve haver dois caminhos disjuntos entre i e j
+                if (!g.isThereTwoDisjointPaths(i, j, g)) {
+                    //std::cout << "Vértices " << i << " e " << j << " não possuem dois caminhos disjuntos." << std::endl;
+                    return false; // Se não houver dois caminhos disjuntos, não é um componente
+                }
+            }
+        }
+    }
+
+    return true; // Se passou por todos os pares de vértices conectados, é um componente
 }
+
+
+
+
+
+void getComponentByCut(Graph g, vector<vector<set<int>>> &Blocos)
+{
+    stack<Graph> pilhaDeGrafos;
+    pilhaDeGrafos.push(g); 
+    vector<int> vertices;  
+
+  
+    while (!pilhaDeGrafos.empty())
+    {
+        Graph gLinha = pilhaDeGrafos.top();
+        pilhaDeGrafos.pop();                
+
+        bool encontrouArticulacao = false;
+
+        
+        for (int v : gLinha.getVertices())
+        {
+            int a = 0;
+            
+            if (gLinha.isArticulation(v, vertices))
+            {
+                
+                auto [subgrafo1, subgrafo2] = gLinha.separarGrafo(vertices, v);
+
+               
+                if (isComponent(subgrafo1) && isComponent(subgrafo2))
+                {
+                    
+                    Blocos.push_back(subgrafo1.adjList);
+                    Blocos.push_back(subgrafo2.adjList);
+                }
+                else if (isComponent(subgrafo1))
+                {
+                    
+                    Blocos.push_back(subgrafo1.adjList);
+                    pilhaDeGrafos.push(subgrafo2); 
+                }
+                else if (isComponent(subgrafo2))
+                {
+                    Blocos.push_back(subgrafo2.adjList);
+                    pilhaDeGrafos.push(subgrafo1); 
+                }
+                else
+                {
+                    
+                    pilhaDeGrafos.push(subgrafo1);
+                    pilhaDeGrafos.push(subgrafo2);
+                }
+
+                encontrouArticulacao = true; 
+                break;                       
+            }
+            vertices.clear();
+        }
+
+        
+        if (!encontrouArticulacao)
+        {
+            Blocos.push_back(gLinha.adjList);
+        }
+
+         vertices.clear();
+    }
+}
+void printAdjListArray(const std::vector<std::vector<std::set<int>>>& adjListArray) {
+    for (int i = 0; i < adjListArray.size(); ++i) {
+        std::cout << "Componente " << i + 1 << ":" << std::endl;
+        for (int j = 0; j < adjListArray[i].size(); ++j) {
+            if (!adjListArray[i][j].empty()) {
+                std::cout << "  Vértice " << j << ": ";
+                for (const auto& neighbor : adjListArray[i][j]) {
+                    std::cout << neighbor << " ";
+                }
+                std::cout << std::endl;
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+Graph buildProblem(){
+    Graph G(4);
+    G.addEdge(1,2);
+    G.addEdge(2,3);
+    return G;
+}
+
 
 int main()
 
 {
 
-    std::vector<int> verticesList = {100, 1000, 10000, 100000}; // 100, 1.000, 10.000 e 100.000 vértices
+    std::vector<int> verticesList = {100}; // 100, 1.000, 10.000 e 100.000 vértices
 
-    for (int j = 0; j < verticesList.size(); j++)
-    {
-        int vertices = verticesList[j];
+        int vertices = verticesList[0];
         vector<vector<pair<int, int>>> Components;
+        vector<vector<set<int>>> subgraphs;
         auto startFunction = std::chrono::high_resolution_clock::now();
-
-        for (int i = 0; i < 30; i++)
+        auto endFunction1 = std::chrono::high_resolution_clock::now();
+        auto endFunction2 = std::chrono::high_resolution_clock::now();
+         for (int i = 0; i < 30; i++)
         {
-            int edges = vertices * 1.5; // Por exemplo, duas arestas para cada vértice
-            Graph graph = generateGraph(vertices, edges);
-            TarjanInicial(graph, 0, -1, Components);
-            // printComponents(Components); Descomente se quiser ver os componentes e suas arestas
-            Components.clear();
-        }
+          int edges = vertices * 1.5;
+        Graph graph = generateGraph(vertices,edges);
+        Graph graph2 = graph;
+        getComponentByCut(graph, subgraphs);
+        TarjanInicial(graph2, 0, -1, Components);
+        printAdjListArray(subgraphs);
+        printComponents(Components);
+         Components.clear();
+         subgraphs.clear();
+         }
 
-        auto endFunction = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> duration = endFunction - startFunction;
-        std::cout << "Tempo de execução usando o Algoritmo proposto por Tarjan com 30 grafos de : " << verticesList[j] << " vértices " << "e " << verticesList[j] * 1.5 << " arestas : " << (duration.count() / 30) << " Milissegundos" << std::endl;
-    }
+         
+         std::chrono::duration<double, std::milli> duration = endFunction1 - startFunction;
+         std::cout << "Tempo de execução usando o Algoritmo proposto por Tarjan com 30 grafos de : " << verticesList[0] << " vértices " << "e " << verticesList[0] * 1.5 << " arestas : " << (duration.count() / 10) << " Milissegundos" << std::endl;
+    
 
     return 0;
 }
