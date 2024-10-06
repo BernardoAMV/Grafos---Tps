@@ -1122,7 +1122,7 @@ int main()
 
     // cout << "FIM METODO 3" << endl;
 
-    vector<int> verticesList = {10000}; // 100, 1.000, 10.000 e 100.000 vértices
+    vector<int> verticesList = {10, 100, 500}; // 100, 1.000, 10.000 e 100.000 vértices
 
     int vertices = verticesList[0];
     vector<vector<set<int>>> subgraphs;
@@ -1149,9 +1149,9 @@ int main()
             startFunction = chrono::high_resolution_clock::now();
             metodo1.execute();
             endFunction1 = chrono::high_resolution_clock::now();
-            // metodo2.execute();
+            metodo2.execute();
             endFunction2 = chrono::high_resolution_clock::now();
-            // metodo3.execute();
+            metodo3.execute();
             endFunction3 = chrono::high_resolution_clock::now();
 
             Components.clear();
@@ -1165,9 +1165,9 @@ int main()
 
         cout << "[1]. Tempo de execução usando um método que verifica a existência de dois caminhos internamente disjuntos (ou um ciclo) entre cada par de vértices do grafo, com 30 grafos de : " << verticesList[j] << " vértices " << "e " << verticesList[j] * 1.5 << " arestas : " << (duration1.count() / 5) << " Milissegundos" << endl;
 
-        // cout << "[2]. Tempo de execução identificando articulações e testando a conectividade após a remoção de cada vértice, com 5 grafos de : " << verticesList[j] << " vértices " << "e " << verticesList[j] * 1.5 << " arestas : " << (duration2.count() / 5) << " Milissegundos" << endl;
+        cout << "[2]. Tempo de execução identificando articulações e testando a conectividade após a remoção de cada vértice, com 5 grafos de : " << verticesList[j] << " vértices " << "e " << verticesList[j] * 1.5 << " arestas : " << (duration2.count() / 5) << " Milissegundos" << endl;
 
-        // cout << "[3]. Tempo de execução usando o Algoritmo proposto por Tarjan com 5 grafos de : " << verticesList[j] << " vértices " << "e " << verticesList[j] * 1.5 << " arestas : " << (duration3.count() / 5) << " Milissegundos" << endl;
+        cout << "[3]. Tempo de execução usando o Algoritmo proposto por Tarjan com 5 grafos de : " << verticesList[j] << " vértices " << "e " << verticesList[j] * 1.5 << " arestas : " << (duration3.count() / 5) << " Milissegundos" << endl;
     }
 
     return 0;
