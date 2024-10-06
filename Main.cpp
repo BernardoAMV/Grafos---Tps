@@ -123,7 +123,7 @@ public:
             adjList[neighbor].insert(vertice);
         }
         set<int> size = getVertices();
-        return Count + 1 < size.size() - 1; // 1 a mais por conta do metodo nao contar o nó raiz e da remoção
+        return Count + 1 < size.size() - 1; // 1 a mais por conta do metodo nao contar o nó raiz
         }
     
 
@@ -513,7 +513,6 @@ bool isComponent(Graph& g) {
             }
         }
     }
-
     return true; // Se passou por todos os pares de vértices conectados, é um componente
 }
 
@@ -534,14 +533,13 @@ void getComponentByCut(Graph g, vector<vector<set<int>>> &Blocos)
         pilhaDeGrafos.pop();                
 
         bool encontrouArticulacao = false;
-
-        
+            
         for (int v : gLinha.getVertices())
         {
             int a = 0;
             
             if (gLinha.isArticulation(v, vertices))
-            {
+            {   
                 
                 auto [subgrafo1, subgrafo2] = gLinha.separarGrafo(vertices, v);
 
@@ -612,31 +610,31 @@ int main()
 
 {
 
-    std::vector<int> verticesList = {100, 1000, 10000, 100000}; // 100, 1.000, 10.000 e 100.000 vértices
+    std::vector<int> verticesList = {10000,100000}; // 100, 1.000, 10.000 e 100.000 vértices
 
-        int vertices = verticesList[0];
+        for(int j = 0; j < verticesList.size(); j++){
+        int vertices = verticesList[j];
         vector<vector<pair<int, int>>> Components;
         vector<vector<set<int>>> subgraphs;
         auto startFunction = std::chrono::high_resolution_clock::now();
-        auto endFunction1 = std::chrono::high_resolution_clock::now();
-        auto endFunction2 = std::chrono::high_resolution_clock::now();
+        
          for (int i = 0; i < 5; i++)
         {
           int edges = vertices * 1.5;
         Graph graph = generateGraph(vertices,edges);
         Graph graph2 = graph;
-        getComponentByCut(graph, subgraphs);
+       // getComponentByCut(graph, subgraphs);
         TarjanInicial(graph2, 0, -1, Components);
         printAdjListArray(subgraphs);
-        printComponents(Components);
-         Components.clear();
+       // printComponents(Components);
+       //  Components.clear();
          subgraphs.clear();
          }
-
+        auto endFunction1 = std::chrono::high_resolution_clock::now();
          
          std::chrono::duration<double, std::milli> duration = endFunction1 - startFunction;
-         std::cout << "Tempo de execução usando o Algoritmo proposto por Tarjan com 30 grafos de : " << verticesList[0] << " vértices " << "e " << verticesList[0] * 1.5 << " arestas : " << (duration.count() / 10) << " Milissegundos" << std::endl;
-    
+         std::cout << "Tempo de execução usando o Algoritmo proposto por Tarjan com 5 grafos de : " << verticesList[j] << " vértices " << "e " << verticesList[j] * 1.5 << " arestas : " << (duration.count() / 5) << " Milissegundos" << std::endl;
+}
 
     return 0;
 }
